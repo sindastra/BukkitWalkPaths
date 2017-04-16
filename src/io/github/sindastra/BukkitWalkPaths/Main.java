@@ -24,6 +24,7 @@ package io.github.sindastra.BukkitWalkPaths;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -38,7 +39,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class Main extends JavaPlugin implements Listener {
 
-	Map<String,Boolean> pathWalkers = new HashMap<String,Boolean>();
+	Map<UUID,Boolean> pathWalkers = new HashMap<UUID,Boolean>();
 	
 	@Override
 	public void onEnable()
@@ -58,10 +59,10 @@ public class Main extends JavaPlugin implements Listener {
 	{
 		Player player = (Player)event.getPlayer();
 		
-		if( pathWalkers.get(player.getName()) == null )
+		if( pathWalkers.get(player.getUniqueId()) == null )
 			return;
 		
-		if( !(boolean)pathWalkers.get(player.getName()) )
+		if( !(boolean)pathWalkers.get(player.getUniqueId()) )
 			return;
 		
 		Location playerLoc = (Location) player.getLocation();
@@ -88,15 +89,15 @@ public class Main extends JavaPlugin implements Listener {
 			else
 			{
 				Player player = (Player)sender;
-				
+
 				if(player.isOp() || player.hasPermission("sindastra.walkpaths.use"))
 				{
-					if(pathWalkers.get(player.getName()) == null)
-						pathWalkers.put(player.getName(), true);
+					if(pathWalkers.get(player.getUniqueId()) == null)
+						pathWalkers.put(player.getUniqueId(), true);
 					else
-						pathWalkers.put(player.getName(), !(boolean)pathWalkers.get(player.getName()));
+						pathWalkers.put(player.getUniqueId(), !(boolean)pathWalkers.get(player.getUniqueId()));
 					
-					player.sendMessage("Path walking "+ ((boolean)pathWalkers.get(player.getName())?"enabled!":"disabled.") );
+					player.sendMessage("Path walking "+ ((boolean)pathWalkers.get(player.getUniqueId())?"enabled!":"disabled.") );
 				}
 				else
 				{
