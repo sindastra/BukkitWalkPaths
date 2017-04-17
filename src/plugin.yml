@@ -1,7 +1,7 @@
 main: io.github.sindastra.BukkitWalkPaths.Main
-version: 1.0.2
+version: 1.1.0
 name: SindastrasWalkPaths
 commands:
     walkpath:
         description: Walk a path!
-        usage: /walkpath
+        usage: Use "/walkpath help" for more details.
