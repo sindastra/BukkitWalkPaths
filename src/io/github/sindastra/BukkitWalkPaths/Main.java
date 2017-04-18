@@ -42,8 +42,9 @@ public class Main extends JavaPlugin implements Listener {
 
 	Map<UUID,Boolean> pathWalkers = new HashMap<UUID,Boolean>();
 	Map<String,Material> pathMaterial = new HashMap<String,Material>();
+	Map<String,Boolean> placeUnderFeet = new HashMap<String,Boolean>();
 	
-	private String helpMsgAvailablePaths = ChatColor.DARK_AQUA + "Available path types: path, grass, dirt, stone, cobblestone, glowstone, stonebrick";
+	private String helpMsgAvailablePaths = ChatColor.DARK_AQUA + "Available path types: path, grass, dirt, stone, cobblestone, glowstone, stonebrick, snowblock, snow";
 	private String helpMsgSpecifyPaths   = ChatColor.GREEN     + "Use '/walkpath [path_type]' to specify a path type.";
 	private String helpMsgToggleOnOff    = ChatColor.GOLD      + "Use '/walkpath' without arguments to toggle path walking on or off.";
 	private String helpMsgUnstuck        = ChatColor.YELLOW    + "Use '/walkpath unstuck' to free yourself if you get stuck in the ground.";
@@ -80,12 +81,28 @@ public class Main extends JavaPlugin implements Listener {
 	
 	private void playerPathMaterial(Player p, Material m)
 	{
+		playerPathMaterial(p, m, true);
+	}
+	
+	private void playerPathMaterial(Player p, Material m, boolean placeUnder)
+	{
 		pathMaterial.put(p.getUniqueId().toString() + "_MATERIAL", m);
+		placeUnderFeet.put(p.getUniqueId().toString()+"_PlaceUnderFeet", placeUnder);
 	}
 	
 	private Material playerPathMaterial(Player p)
 	{
 		return pathMaterial.get(p.getUniqueId().toString() + "_MATERIAL");
+	}
+	
+	private boolean shouldPlaceMaterialUnderFeet(Player p)
+	{
+		return placeUnderFeet.get(p.getUniqueId().toString()+"_PlaceUnderFeet");
+	}
+	
+	private byte placeMaterialDirection(Player p)
+	{
+		return (byte)(shouldPlaceMaterialUnderFeet(p) ? -1 : 1);
 	}
 	
 	@EventHandler
@@ -99,13 +116,22 @@ public class Main extends JavaPlugin implements Listener {
 		if( !(boolean)pathWalkers.get(player.getUniqueId()) )
 			return;
 		
-		Location playerLoc = (Location) player.getLocation();
-		Location pathLoc = playerLoc.add(0,-1,0);
+		Location underFeetLoc = (Location)player.getLocation().add(0,-0.1,0);
+		Location pathLoc = (Location)player.getLocation().add(0,0.2 * placeMaterialDirection(player),0);
 		
-		if(pathLoc.getBlock().isEmpty())
+		if(underFeetLoc.getBlock().isEmpty())
 			return;
 		
-		if(pathLoc.getBlock().isLiquid())
+		if(underFeetLoc.getBlock().isLiquid())
+			return;
+		
+		if(shouldPlaceMaterialUnderFeet(player) && !pathLoc.getBlock().getType().isSolid())
+			return;
+		
+		if(pathLoc.getBlock().getType().equals(Material.BEDROCK))
+			return;
+		
+		if(playerPathMaterial(player).equals(Material.SNOW) && underFeetLoc.getBlock().getType().equals(Material.SNOW))
 			return;
 		
 		if(playerPathMaterial(player) == null)
@@ -179,6 +205,12 @@ public class Main extends JavaPlugin implements Listener {
 								break;
 							case "stonebrick":
 								playerPathMaterial(player, Material.SMOOTH_BRICK);
+								break;
+							case "snowblock":
+								playerPathMaterial(player, Material.SNOW_BLOCK);
+								break;
+							case "snow":
+								playerPathMaterial(player, Material.SNOW, false);
 								break;
 							default:
 								enablePathWalking = false;
