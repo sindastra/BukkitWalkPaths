@@ -22,6 +22,7 @@
 
 package io.github.sindastra.BukkitWalkPaths;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -40,14 +41,61 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class Main extends JavaPlugin implements Listener {
 
-	Map<UUID,Boolean> pathWalkers = new HashMap<UUID,Boolean>();
-	Map<String,Material> pathMaterial = new HashMap<String,Material>();
-	Map<String,Boolean> placeUnderFeet = new HashMap<String,Boolean>();
+	private static Map<UUID,Boolean> pathWalkers = new HashMap<UUID,Boolean>();
+	private static Map<String,Material> pathMaterial = new HashMap<String,Material>();
+	private static Map<String,Boolean> placeUnderFeet = new HashMap<String,Boolean>();
 	
-	private String helpMsgAvailablePaths = ChatColor.DARK_AQUA + "Available path types: path, grass, dirt, stone, cobblestone, glowstone, stonebrick, snowblock, snow";
-	private String helpMsgSpecifyPaths   = ChatColor.GREEN     + "Use '/walkpath [path_type]' to specify a path type.";
-	private String helpMsgToggleOnOff    = ChatColor.GOLD      + "Use '/walkpath' without arguments to toggle path walking on or off.";
-	private String helpMsgUnstuck        = ChatColor.YELLOW    + "Use '/walkpath unstuck' to free yourself if you get stuck in the ground.";
+	private static String helpMsgAvailablePaths = ChatColor.DARK_AQUA + "Available path types: path, grass, dirt, wood, log, stone, cobblestone, glowstone, stonebrick, snowblock, snow";
+	private static String helpMsgSpecifyPaths   = ChatColor.GREEN     + "Use '/walkpath [path_type]' to specify a path type.";
+	private static String helpMsgToggleOnOff    = ChatColor.GOLD      + "Use '/walkpath' without arguments to toggle path walking on or off.";
+	private static String helpMsgUnstuck        = ChatColor.YELLOW    + "Use '/walkpath unstuck' to free yourself if you get stuck in the ground.";
+	
+	private static boolean debug = false;
+	
+	private static Material[] protectedMaterials = {
+			
+			// Players' personal blocks:
+			Material.BED, Material.BED_BLOCK, Material.CHEST, Material.TRAPPED_CHEST, Material.FURNACE,
+			Material.BURNING_FURNACE, Material.ENCHANTMENT_TABLE, Material.ENDER_CHEST, Material.ANVIL,
+			Material.CAULDRON, Material.BREWING_STAND, Material.ARMOR_STAND, Material.SIGN, Material.SIGN_POST,
+			Material.WALL_SIGN, Material.WORKBENCH, Material.DISPENSER, Material.DROPPER, Material.HOPPER,
+			
+			// Redstone:
+			Material.DAYLIGHT_DETECTOR, Material.DAYLIGHT_DETECTOR_INVERTED, Material.REDSTONE_WIRE,
+			Material.REDSTONE_COMPARATOR, Material.REDSTONE_COMPARATOR_OFF, Material.REDSTONE_COMPARATOR_ON,
+			Material.REDSTONE_TORCH_OFF, Material.REDSTONE_TORCH_ON, Material.PISTON_BASE, Material.PISTON_STICKY_BASE,
+			Material.PISTON_MOVING_PIECE, Material.PISTON_EXTENSION,
+			
+			// Rails:
+			Material.RAILS, Material.ACTIVATOR_RAIL, Material.DETECTOR_RAIL, Material.POWERED_RAIL,
+			
+			// Misc:
+			Material.LADDER, Material.STRING, Material.BEACON, Material.LEVER, Material.STONE_BUTTON, Material.WOOD_BUTTON,
+			
+			// Doors:
+			Material.TRAP_DOOR, Material.IRON_TRAPDOOR, Material.ACACIA_DOOR, Material.BIRCH_DOOR,
+			Material.DARK_OAK_DOOR, Material.IRON_DOOR, Material.JUNGLE_DOOR, Material.SPRUCE_DOOR,
+			Material.WOOD_DOOR, Material.WOODEN_DOOR,
+			
+			// Fences:
+			Material.FENCE, Material.FENCE_GATE, Material.ACACIA_FENCE, Material.ACACIA_FENCE_GATE,
+			Material.BIRCH_FENCE, Material.BIRCH_FENCE_GATE, Material.DARK_OAK_FENCE, Material.DARK_OAK_FENCE_GATE,
+			Material.IRON_FENCE, Material.JUNGLE_FENCE, Material.JUNGLE_FENCE_GATE, Material.NETHER_FENCE,
+			Material.SPRUCE_FENCE, Material.SPRUCE_FENCE_GATE,
+			
+			// Plants/Food/Farm:
+			Material.MELON_BLOCK, Material.MELON, Material.MELON_SEEDS, Material.MELON_STEM,
+			Material.PUMPKIN_SEEDS, Material.PUMPKIN_STEM, Material.PUMPKIN, Material.CARROT, Material.POTATO,
+			Material.NETHER_WARTS, Material.NETHER_WART_BLOCK, Material.BROWN_MUSHROOM, Material.RED_MUSHROOM,
+			Material.WATER_LILY, Material.SUGAR_CANE_BLOCK,
+			
+			// End:
+			Material.DRAGON_EGG, Material.ENDER_PORTAL, Material.ENDER_PORTAL_FRAME,
+			
+			// Admin:
+			Material.COMMAND, Material.MOB_SPAWNER, Material.BEDROCK, Material.STRUCTURE_VOID, Material.BARRIER,
+			Material.SPONGE
+	};
 	
 	@Override
 	public void onEnable()
@@ -137,6 +185,14 @@ public class Main extends JavaPlugin implements Listener {
 		if(playerPathMaterial(player) == null)
 			return;
 		
+		if( shouldPlaceMaterialUnderFeet(player) && Arrays.asList(protectedMaterials).contains(underFeetLoc.getBlock().getType()) )
+		{
+			if(debug)
+				player.sendMessage("[DEBUG] The material "+underFeetLoc.getBlock().getType().toString()
+						+" you are walking on is protected from path walking.");
+			return;
+		}
+		
 		pathLoc.getBlock().setType(playerPathMaterial(player));
 	}
 	
@@ -183,7 +239,7 @@ public class Main extends JavaPlugin implements Listener {
 						
 						boolean enablePathWalking = true;
 						
-						switch(args[0])
+						switch(args[0].toLowerCase())
 						{
 							case "path":
 								playerPathMaterial(player, Material.GRASS_PATH);
@@ -193,6 +249,12 @@ public class Main extends JavaPlugin implements Listener {
 								break;
 							case "dirt":
 								playerPathMaterial(player, Material.DIRT);
+								break;
+							case "wood":
+								playerPathMaterial(player, Material.WOOD);
+								break;
+							case "log":
+								playerPathMaterial(player, Material.LOG);
 								break;
 							case "stone":
 								playerPathMaterial(player, Material.STONE);
